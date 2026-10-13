@@ -17,3 +17,7 @@ enable_testing()
 add_executable(fm7core_tests tests/m6809_tests.cpp)
 target_link_libraries(fm7core_tests PRIVATE fm7core)
 add_test(NAME fm7core_tests COMMAND fm7core_tests)
+
+add_executable(memory_bus_tests tests/memory_bus_tests.cpp)
+target_include_directories(memory_bus_tests PRIVATE src)
+add_test(NAME memory_bus_tests COMMAND memory_bus_tests)
