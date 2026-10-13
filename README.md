@@ -1,14 +1,14 @@
-# Fujitsu-FM-7
+# Fum7X360
 
 Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 
-> **Status:** early emulator core. The host build and existing smoke tests pass in GitHub Actions. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
+> **Status:** early emulator core. The host build and existing smoke tests have passed in GitHub Actions previously; the renamed workflow must run again to verify the new target name. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
 
 ## Current implementation
 
 - Portable C++17 core built with CMake.
 - Initial Motorola 6809 instruction subset: loads/stores, basic arithmetic/logical operations, direct and long branches, stack push/pull subset, RTS and cycle accounting.
-- Host smoke-test executable.
+- Host smoke-test executable named `fum7x360`.
 - GitHub Actions workflow that builds the host target, runs CTest and executes the smoke test.
 
 Unsupported opcodes stop the current CPU core. This subset is intended for incremental development and is not sufficient to run FM-7 firmware or commercial software.
@@ -31,7 +31,7 @@ Requires a C++17 compiler and CMake:
 cmake -S . -B build
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/fm7x360
+./build/fum7x360
 ```
 
 This builds a host development executable, not an Xbox 360 executable.
