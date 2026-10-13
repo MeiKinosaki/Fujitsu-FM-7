@@ -23,11 +23,11 @@ int main() {
     }
 
     if (memory[0x2000] != 0x42) {
-        std::cerr << "FM7X360 CPU smoke test failed.\n";
+        std::cerr << "Fum7X360 CPU smoke test failed.\n";
         return 1;
     }
 
-    std::cout << "FM7X360 host smoke test passed; stored value 0x42 at $2000.\n";
+    std::cout << "Fum7X360 host smoke test passed; stored value 0x42 at $2000.\n";
     std::cout << "This host executable is not an Xbox 360 default.xex.\n";
     return 0;
 }
