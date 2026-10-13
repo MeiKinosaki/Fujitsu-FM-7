@@ -45,6 +45,8 @@ private:
     void write16(std::uint16_t address, std::uint16_t value);
     void push8(std::uint16_t& stack, std::uint8_t value);
     std::uint8_t pull8(std::uint16_t& stack);
+    void push16(std::uint16_t& stack, std::uint16_t value);
+    std::uint16_t pull16(std::uint16_t& stack);
     void setNZ8(std::uint8_t value);
     void setNZ16(std::uint16_t value);
     void setAddFlags8(std::uint8_t lhs, std::uint8_t rhs, std::uint16_t result);
