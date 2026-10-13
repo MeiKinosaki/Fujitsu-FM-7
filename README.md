@@ -2,25 +2,26 @@
 
 Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 
-> **Status:** early emulator core. The host build and existing smoke tests have passed in GitHub Actions previously; the renamed workflow must run again to verify the new target name. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
+> **Status:** early emulator core. The host build, CTest suite, and smoke-test executable pass in GitHub Actions. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
 
 ## Current implementation
 
 - Portable C++17 core built with CMake.
-- Initial Motorola 6809 instruction subset: loads/stores, basic arithmetic/logical operations, direct and long branches, stack push/pull subset, RTS and cycle accounting.
+- Initial Motorola 6809 instruction subset: immediate and extended loads/stores, basic arithmetic/logical operations, short and long branches, stack push/pull subset, `BSR`, `LBSR`, extended `JSR`, `RTS`, and basic cycle accounting.
+- Automated tests exercise CPU loads/stores, branches, stack return addresses, and subroutine call/return flow.
 - Host smoke-test executable named `fum7x360`.
 - GitHub Actions workflow that builds the host target, runs CTest and executes the smoke test.
 
-Unsupported opcodes stop the current CPU core. This subset is intended for incremental development and is not sufficient to run FM-7 firmware or commercial software.
+Unsupported opcodes stop the current CPU core. Instruction coverage, cycle accuracy, interrupt behavior, and memory-mapped hardware are incomplete; this subset cannot run FM-7 firmware or commercial software yet.
 
 ## Planned work
 
-1. Expand 6809 instruction coverage and validate flags, cycles, and stack behavior with tests.
-2. Separate CPU execution from memory access so the two processors can share a correct machine bus.
-3. Implement the FM-7 memory map, shared memory and CPU handshake.
+1. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupt handling.
+2. Introduce a memory-bus interface to decouple CPU execution from flat RAM.
+3. Implement the FM-7 memory map, shared memory, and coordination between its processors.
 4. Implement video RAM/planes, palette and scanout.
 5. Add sound, keyboard/joystick, cassette and disk devices.
-6. Integrate the Xbox 360 frontend and choose a compatible SDK/toolchain.
+6. Integrate the Xbox 360 frontend and select a compatible SDK/toolchain.
 7. Build and test a genuine Xbox 360 `default.xex` on supported hardware or a suitable test environment.
 
 ## Host build
