@@ -1,4 +1,4 @@
-name: FM7X360 host core checks
+name: Fum7X360 host core checks
 
 on:
   push:
@@ -20,4 +20,4 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
       - name: Run smoke test
-        run: ./build/fm7x360
+        run: ./build/fum7x360
