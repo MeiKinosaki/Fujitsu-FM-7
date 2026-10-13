@@ -38,6 +38,53 @@ int main() {
 
     {
         fm7::M6809 cpu;
+        auto& mem = cpu.memory();
+        mem[0x0300] = 0x8D; // BSR +3; return address = $0302
+        mem[0x0301] = 0x03;
+        mem[0x0302] = 0xC6; // LDB #$66 after return
+        mem[0x0303] = 0x66;
+        mem[0x0305] = 0x86; // subroutine: LDA #$5a
+        mem[0x0306] = 0x5A;
+        mem[0x0307] = 0x39; // RTS
+        cpu.reset(0x0300);
+        cpu.registers().s = 0x4000;
+
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0305);
+        assert(cpu.registers().s == 0x3ffe);
+        assert(cpu.step());
+        assert(cpu.registers().a == 0x5a);
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0302);
+        assert(cpu.registers().s == 0x4000);
+        assert(cpu.step());
+        assert(cpu.registers().b == 0x66);
+    }
+
+    {
+        fm7::M6809 cpu;
+        auto& mem = cpu.memory();
+        mem[0x0400] = 0x17; // LBSR +3; return address = $0403
+        mem[0x0401] = 0x00;
+        mem[0x0402] = 0x03;
+        mem[0x0403] = 0x12; // NOP after return
+        mem[0x0406] = 0x4F; // subroutine: CLRA
+        mem[0x0407] = 0x39; // RTS
+        cpu.reset(0x0400);
+        cpu.registers().s = 0x5000;
+
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0406);
+        assert(cpu.step());
+        assert(cpu.registers().a == 0);
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0403);
+        assert(cpu.registers().s == 0x5000);
+        assert(cpu.step());
+    }
+
+    {
+        fm7::M6809 cpu;
         cpu.memory()[0] = 0x00; // deliberately unsupported
         cpu.reset(0);
         assert(!cpu.step());
