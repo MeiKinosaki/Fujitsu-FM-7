@@ -2,23 +2,24 @@
 
 Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 
-> **Status:** early emulator core. The host build, CTest suite, and smoke-test executable pass in GitHub Actions. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
+> **Status:** early emulator core. The host build, CTest suite, and smoke-test executable pass in GitHub Actions when the latest workflow is green. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
 
 ## Current implementation
 
 - Portable C++17 core built with CMake.
 - Initial Motorola 6809 instruction subset: immediate and extended loads/stores, basic arithmetic/logical operations, short and long branches, stack push/pull subset, `BSR`, `LBSR`, extended `JSR`, `RTS`, and basic cycle accounting.
-- Automated tests exercise CPU loads/stores, branches, stack return addresses, and subroutine call/return flow.
+- Initial `MemoryBus` abstraction with 64 KiB address space, 8-bit reads/writes, big-endian 16-bit helpers, and wraparound at `0xFFFF`.
+- Automated tests for CPU loads/stores, branches, subroutine call/return, and memory-bus byte/word operations.
 - Host smoke-test executable named `fum7x360`.
-- GitHub Actions workflow that builds the host target, runs CTest and executes the smoke test.
+- GitHub Actions workflow that builds host targets, runs CTest and executes the smoke test.
 
-Unsupported opcodes stop the current CPU core. Instruction coverage, cycle accuracy, interrupt behavior, and memory-mapped hardware are incomplete; this subset cannot run FM-7 firmware or commercial software yet.
+The current bus is a flat-memory foundation only: it is not yet wired into the CPU and does not implement the FM-7 hardware map, shared-memory arbitration, or memory-mapped devices. Unsupported CPU opcodes stop execution. The current subset cannot run FM-7 firmware or commercial software.
 
 ## Planned work
 
-1. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupt handling.
-2. Introduce a memory-bus interface to decouple CPU execution from flat RAM.
-3. Implement the FM-7 memory map, shared memory, and coordination between its processors.
+1. Connect the CPU to the bus through a read/write interface, retaining the flat-memory test harness where useful.
+2. Add a machine-level address map and shared-memory coordination for the FM-7 processors.
+3. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupt handling.
 4. Implement video RAM/planes, palette and scanout.
 5. Add sound, keyboard/joystick, cassette and disk devices.
 6. Integrate the Xbox 360 frontend and select a compatible SDK/toolchain.
