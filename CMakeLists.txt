@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(FM7X360 VERSION 0.1.0 LANGUAGES CXX)
+project(Fum7X360 VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,8 +10,8 @@ add_library(fm7core
 )
 target_include_directories(fm7core PUBLIC src)
 
-add_executable(fm7x360 src/main.cpp)
-target_link_libraries(fm7x360 PRIVATE fm7core)
+add_executable(fum7x360 src/main.cpp)
+target_link_libraries(fum7x360 PRIVATE fm7core)
 
 enable_testing()
 add_executable(fm7core_tests tests/m6809_tests.cpp)
