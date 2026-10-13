@@ -5,8 +5,9 @@
 
 int main() {
     {
-        fm7::M6809 cpu;
-        auto& mem = cpu.memory();
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        auto& mem = bus.rawMemory();
         mem[0x0100] = 0x86; // LDA #$7f
         mem[0x0101] = 0x7f;
         mem[0x0102] = 0xB7; // STA $2000
@@ -17,13 +18,14 @@ int main() {
         assert(cpu.step());
         assert(cpu.registers().a == 0x7f);
         assert(cpu.step());
-        assert(mem[0x2000] == 0x7f);
+        assert(bus.read8(0x2000) == 0x7f);
         assert(cpu.cycles() == 7);
     }
 
     {
-        fm7::M6809 cpu;
-        auto& mem = cpu.memory();
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        auto& mem = bus.rawMemory();
         mem[0x0200] = 0x20; // BRA +2
         mem[0x0201] = 0x02;
         mem[0x0204] = 0xC6; // LDB #$33
@@ -37,8 +39,9 @@ int main() {
     }
 
     {
-        fm7::M6809 cpu;
-        auto& mem = cpu.memory();
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        auto& mem = bus.rawMemory();
         mem[0x0300] = 0x8D; // BSR +3; return address = $0302
         mem[0x0301] = 0x03;
         mem[0x0302] = 0xC6; // LDB #$66 after return
@@ -62,8 +65,9 @@ int main() {
     }
 
     {
-        fm7::M6809 cpu;
-        auto& mem = cpu.memory();
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        auto& mem = bus.rawMemory();
         mem[0x0400] = 0x17; // LBSR +3; return address = $0403
         mem[0x0401] = 0x00;
         mem[0x0402] = 0x03;
@@ -84,8 +88,9 @@ int main() {
     }
 
     {
-        fm7::M6809 cpu;
-        auto& mem = cpu.memory();
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        auto& mem = bus.rawMemory();
         mem[0x0500] = 0xBD; // JSR $0510
         mem[0x0501] = 0x05;
         mem[0x0502] = 0x10;
@@ -110,8 +115,9 @@ int main() {
     }
 
     {
-        fm7::M6809 cpu;
-        cpu.memory()[0] = 0x00; // deliberately unsupported
+        fm7::MemoryBus bus;
+        fm7::M6809 cpu(bus);
+        bus.write8(0, 0x00); // deliberately unsupported
         cpu.reset(0);
         assert(!cpu.step());
         assert(cpu.halted());
