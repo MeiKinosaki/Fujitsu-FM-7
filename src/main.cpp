@@ -3,16 +3,16 @@
 #include <iostream>
 
 int main() {
-    fm7::M6809 cpu;
-    auto& memory = cpu.memory();
+    fm7::MemoryBus bus;
+    fm7::M6809 cpu(bus);
 
     // Tiny smoke-test program: LDA #$42; STA $2000; NOP.
-    memory[0x0000] = 0x86;
-    memory[0x0001] = 0x42;
-    memory[0x0002] = 0xB7;
-    memory[0x0003] = 0x20;
-    memory[0x0004] = 0x00;
-    memory[0x0005] = 0x12;
+    bus.write8(0x0000, 0x86);
+    bus.write8(0x0001, 0x42);
+    bus.write8(0x0002, 0xB7);
+    bus.write8(0x0003, 0x20);
+    bus.write8(0x0004, 0x00);
+    bus.write8(0x0005, 0x12);
 
     cpu.reset(0x0000);
     for (int i = 0; i < 3 && !cpu.halted(); ++i) {
@@ -22,7 +22,7 @@ int main() {
         }
     }
 
-    if (memory[0x2000] != 0x42) {
+    if (bus.read8(0x2000) != 0x42) {
         std::cerr << "Fum7X360 CPU smoke test failed.\n";
         return 1;
     }
