@@ -85,6 +85,32 @@ int main() {
 
     {
         fm7::M6809 cpu;
+        auto& mem = cpu.memory();
+        mem[0x0500] = 0xBD; // JSR $0510
+        mem[0x0501] = 0x05;
+        mem[0x0502] = 0x10;
+        mem[0x0503] = 0xC6; // LDB #$77 after return
+        mem[0x0504] = 0x77;
+        mem[0x0510] = 0x86; // subroutine: LDA #$22
+        mem[0x0511] = 0x22;
+        mem[0x0512] = 0x39; // RTS
+        cpu.reset(0x0500);
+        cpu.registers().s = 0x6000;
+
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0510);
+        assert(cpu.registers().s == 0x5ffe);
+        assert(cpu.step());
+        assert(cpu.registers().a == 0x22);
+        assert(cpu.step());
+        assert(cpu.registers().pc == 0x0503);
+        assert(cpu.registers().s == 0x6000);
+        assert(cpu.step());
+        assert(cpu.registers().b == 0x77);
+    }
+
+    {
+        fm7::M6809 cpu;
         cpu.memory()[0] = 0x00; // deliberately unsupported
         cpu.reset(0);
         assert(!cpu.step());
