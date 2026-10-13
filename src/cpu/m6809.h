@@ -1,6 +1,7 @@
 #pragma once
 
-#include <array>
+#include "memory_bus.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -8,8 +9,6 @@ namespace fm7 {
 
 class M6809 {
 public:
-    static constexpr std::size_t kMemorySize = 65536;
-
     struct Registers {
         std::uint16_t pc = 0;
         std::uint16_t x = 0;
@@ -28,13 +27,14 @@ public:
     };
 
     M6809();
+    explicit M6809(MemoryBus& bus);
     void reset(std::uint16_t startAddress = 0x0000);
     bool step();
 
     Registers& registers() noexcept { return regs_; }
     const Registers& registers() const noexcept { return regs_; }
-    std::array<std::uint8_t, kMemorySize>& memory() noexcept { return memory_; }
-    const std::array<std::uint8_t, kMemorySize>& memory() const noexcept { return memory_; }
+    MemoryBus& bus() noexcept { return *bus_; }
+    const MemoryBus& bus() const noexcept { return *bus_; }
     std::uint64_t cycles() const noexcept { return cycles_; }
     bool halted() const noexcept { return halted_; }
 
@@ -53,8 +53,9 @@ private:
     void setSubFlags8(std::uint8_t lhs, std::uint8_t rhs, std::uint16_t result);
     bool branchCondition(std::uint8_t opcode) const;
 
+    MemoryBus ownedBus_{};
+    MemoryBus* bus_ = &ownedBus_;
     Registers regs_{};
-    std::array<std::uint8_t, kMemorySize> memory_{};
     std::uint64_t cycles_ = 0;
     bool halted_ = false;
 };
