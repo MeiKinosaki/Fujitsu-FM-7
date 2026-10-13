@@ -2,36 +2,39 @@
 
 Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 
-> **Status:** initial scaffold only. This repository does not yet contain a complete emulator or a working Xbox 360 `default.xex`.
+> **Status:** early emulator core. The host build and existing smoke tests pass in GitHub Actions. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
 
-## Goals
+## Current implementation
 
-- Emulate the original FM-7's two 6809-family CPUs and their coordination.
-- Implement main RAM, video RAM, ROM mapping and I/O.
-- Reproduce the 640×200 graphics output and 8-color palette.
-- Add AY-3-8910 audio, keyboard/joystick input and cassette/disk loading.
-- Provide an Xbox 360 frontend and a reproducible build pipeline.
+- Portable C++17 core built with CMake.
+- Initial Motorola 6809 instruction subset: loads/stores, basic arithmetic/logical operations, direct and long branches, stack push/pull subset, RTS and cycle accounting.
+- Host smoke-test executable.
+- GitHub Actions workflow that builds the host target, runs CTest and executes the smoke test.
 
-## Development stages
+Unsupported opcodes stop the current CPU core. This subset is intended for incremental development and is not sufficient to run FM-7 firmware or commercial software.
 
-1. Establish a portable C++ core and basic test harness.
-2. Implement and test the 6809 CPU core.
+## Planned work
+
+1. Expand 6809 instruction coverage and validate flags, cycles, and stack behavior with tests.
+2. Separate CPU execution from memory access so the two processors can share a correct machine bus.
 3. Implement the FM-7 memory map, shared memory and CPU handshake.
-4. Implement video, input, sound and media devices.
-5. Integrate the Xbox 360 graphics/input/audio frontend.
-6. Build with an Xbox 360-compatible toolchain and test on the target hardware.
+4. Implement video RAM/planes, palette and scanout.
+5. Add sound, keyboard/joystick, cassette and disk devices.
+6. Integrate the Xbox 360 frontend and choose a compatible SDK/toolchain.
+7. Build and test a genuine Xbox 360 `default.xex` on supported hardware or a suitable test environment.
 
-## Build the current scaffold
+## Host build
 
-A standard C++17 compiler and CMake are needed for the host-side scaffold:
+Requires a C++17 compiler and CMake:
 
 ```sh
 cmake -S . -B build
 cmake --build build
+ctest --test-dir build --output-on-failure
 ./build/fm7x360
 ```
 
-This host build is only a development smoke test; it does **not** produce `default.xex`. Xbox 360 packaging will be added after selecting and validating the target SDK/toolchain.
+This builds a host development executable, not an Xbox 360 executable.
 
 ## References
 
