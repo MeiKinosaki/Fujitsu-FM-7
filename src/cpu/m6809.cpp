@@ -2,7 +2,8 @@
 
 namespace fm7 {
 
-M6809::M6809() { reset(); }
+M6809::M6809() = default;
+M6809::M6809(MemoryBus& bus) : bus_(&bus) {}
 
 void M6809::reset(std::uint16_t startAddress) {
     regs_ = Registers{};
@@ -12,7 +13,7 @@ void M6809::reset(std::uint16_t startAddress) {
 }
 
 std::uint8_t M6809::fetch8() {
-    const auto value = memory_[regs_.pc];
+    const auto value = bus_->read8(regs_.pc);
     regs_.pc = static_cast<std::uint16_t>(regs_.pc + 1);
     return value;
 }
@@ -24,23 +25,20 @@ std::uint16_t M6809::fetch16() {
 }
 
 std::uint16_t M6809::read16(std::uint16_t address) const {
-    const auto high = memory_[address];
-    const auto low = memory_[static_cast<std::uint16_t>(address + 1)];
-    return static_cast<std::uint16_t>((static_cast<std::uint16_t>(high) << 8) | low);
+    return bus_->read16(address);
 }
 
 void M6809::write16(std::uint16_t address, std::uint16_t value) {
-    memory_[address] = static_cast<std::uint8_t>(value >> 8);
-    memory_[static_cast<std::uint16_t>(address + 1)] = static_cast<std::uint8_t>(value);
+    bus_->write16(address, value);
 }
 
 void M6809::push8(std::uint16_t& stack, std::uint8_t value) {
     stack = static_cast<std::uint16_t>(stack - 1);
-    memory_[stack] = value;
+    bus_->write8(stack, value);
 }
 
 std::uint8_t M6809::pull8(std::uint16_t& stack) {
-    const auto value = memory_[stack];
+    const auto value = bus_->read8(stack);
     stack = static_cast<std::uint16_t>(stack + 1);
     return value;
 }
@@ -117,34 +115,30 @@ bool M6809::step() {
     const auto opcode = fetch8();
     switch (opcode) {
     case 0x12: cycles_ += 2; return true; // NOP
-    case 0x16: { // LBRA
+    case 0x16: {
         const auto displacement = static_cast<std::int16_t>(fetch16());
         regs_.pc = static_cast<std::uint16_t>(regs_.pc + displacement);
-        cycles_ += 5;
-        return true;
+        cycles_ += 5; return true;
     }
-    case 0x17: { // LBSR
+    case 0x17: {
         const auto displacement = static_cast<std::int16_t>(fetch16());
         push16(regs_.s, regs_.pc);
         regs_.pc = static_cast<std::uint16_t>(regs_.pc + displacement);
-        cycles_ += 9;
-        return true;
+        cycles_ += 9; return true;
     }
-    case 0x20: { // BRA
+    case 0x20: {
         const auto displacement = static_cast<std::int8_t>(fetch8());
         regs_.pc = static_cast<std::uint16_t>(regs_.pc + displacement);
-        cycles_ += 3;
-        return true;
+        cycles_ += 3; return true;
     }
     case 0x21: case 0x22: case 0x23: case 0x24: case 0x25:
     case 0x26: case 0x27: case 0x28: case 0x29: case 0x2A:
     case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F: {
         const auto displacement = static_cast<std::int8_t>(fetch8());
         if (branchCondition(opcode)) regs_.pc = static_cast<std::uint16_t>(regs_.pc + displacement);
-        cycles_ += 3;
-        return true;
+        cycles_ += 3; return true;
     }
-    case 0x34: { // PSHS
+    case 0x34: {
         const auto mask = fetch8();
         if (mask & 0x80) push16(regs_.s, regs_.pc);
         if (mask & 0x40) push16(regs_.s, regs_.u);
@@ -154,10 +148,9 @@ bool M6809::step() {
         if (mask & 0x04) push8(regs_.s, regs_.b);
         if (mask & 0x02) push8(regs_.s, regs_.a);
         if (mask & 0x01) push8(regs_.s, regs_.cc);
-        cycles_ += 5;
-        return true;
+        cycles_ += 5; return true;
     }
-    case 0x35: { // PULS
+    case 0x35: {
         const auto mask = fetch8();
         if (mask & 0x01) regs_.cc = pull8(regs_.s);
         if (mask & 0x02) regs_.a = pull8(regs_.s);
@@ -167,33 +160,24 @@ bool M6809::step() {
         if (mask & 0x20) regs_.y = pull16(regs_.s);
         if (mask & 0x40) regs_.u = pull16(regs_.s);
         if (mask & 0x80) regs_.pc = pull16(regs_.s);
-        cycles_ += 5;
-        return true;
+        cycles_ += 5; return true;
     }
-    case 0x39: // RTS
-        regs_.pc = pull16(regs_.s);
-        cycles_ += 5;
-        return true;
-    case 0x3F: // SWI interrupt handling is not implemented yet
-        halted_ = true;
-        return false;
+    case 0x39: regs_.pc = pull16(regs_.s); cycles_ += 5; return true;
+    case 0x3F: halted_ = true; return false;
     case 0x4F:
         regs_.a = 0;
         regs_.cc = static_cast<std::uint8_t>((regs_.cc & ~(Negative | Overflow | Zero)) | Zero);
-        cycles_ += 2;
-        return true;
+        cycles_ += 2; return true;
     case 0x5F:
         regs_.b = 0;
         regs_.cc = static_cast<std::uint8_t>((regs_.cc & ~(Negative | Overflow | Zero)) | Zero);
-        cycles_ += 2;
-        return true;
-    case 0x7E: regs_.pc = fetch16(); cycles_ += 3; return true; // JMP extended
-    case 0x8D: { // BSR
+        cycles_ += 2; return true;
+    case 0x7E: regs_.pc = fetch16(); cycles_ += 3; return true;
+    case 0x8D: {
         const auto displacement = static_cast<std::int8_t>(fetch8());
         push16(regs_.s, regs_.pc);
         regs_.pc = static_cast<std::uint16_t>(regs_.pc + displacement);
-        cycles_ += 7;
-        return true;
+        cycles_ += 7; return true;
     }
     case 0x80: { const auto rhs = fetch8(); const auto lhs = regs_.a; const auto result = static_cast<std::uint16_t>(lhs - rhs); regs_.a = static_cast<std::uint8_t>(result); setSubFlags8(lhs, rhs, result); cycles_ += 2; return true; }
     case 0x81: { const auto rhs = fetch8(); setSubFlags8(regs_.a, rhs, static_cast<std::uint16_t>(regs_.a - rhs)); cycles_ += 2; return true; }
@@ -203,25 +187,17 @@ bool M6809::step() {
     case 0x8A: regs_.a |= fetch8(); setNZ8(regs_.a); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 2; return true;
     case 0x8B: { const auto rhs = fetch8(); const auto lhs = regs_.a; const auto result = static_cast<std::uint16_t>(lhs + rhs); regs_.a = static_cast<std::uint8_t>(result); setAddFlags8(lhs, rhs, result); cycles_ += 2; return true; }
     case 0x8E: regs_.x = fetch16(); setNZ16(regs_.x); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 3; return true;
-    case 0xBD: { // JSR extended
-        const auto address = fetch16();
-        push16(regs_.s, regs_.pc);
-        regs_.pc = address;
-        cycles_ += 8;
-        return true;
-    }
-    case 0xB6: { const auto address = fetch16(); regs_.a = memory_[address]; setNZ8(regs_.a); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
-    case 0xB7: { const auto address = fetch16(); memory_[address] = regs_.a; setNZ8(regs_.a); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
+    case 0xBD: { const auto address = fetch16(); push16(regs_.s, regs_.pc); regs_.pc = address; cycles_ += 8; return true; }
+    case 0xB6: { const auto address = fetch16(); regs_.a = bus_->read8(address); setNZ8(regs_.a); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
+    case 0xB7: { const auto address = fetch16(); bus_->write8(address, regs_.a); setNZ8(regs_.a); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
     case 0xC0: { const auto rhs = fetch8(); const auto lhs = regs_.b; const auto result = static_cast<std::uint16_t>(lhs - rhs); regs_.b = static_cast<std::uint8_t>(result); setSubFlags8(lhs, rhs, result); cycles_ += 2; return true; }
     case 0xC1: { const auto rhs = fetch8(); setSubFlags8(regs_.b, rhs, static_cast<std::uint16_t>(regs_.b - rhs)); cycles_ += 2; return true; }
     case 0xC6: regs_.b = fetch8(); setNZ8(regs_.b); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 2; return true;
     case 0xCB: { const auto rhs = fetch8(); const auto lhs = regs_.b; const auto result = static_cast<std::uint16_t>(lhs + rhs); regs_.b = static_cast<std::uint8_t>(result); setAddFlags8(lhs, rhs, result); cycles_ += 2; return true; }
     case 0xCE: regs_.u = fetch16(); setNZ16(regs_.u); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 3; return true;
-    case 0xF6: { const auto address = fetch16(); regs_.b = memory_[address]; setNZ8(regs_.b); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
-    case 0xF7: { const auto address = fetch16(); memory_[address] = regs_.b; setNZ8(regs_.b); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
-    default:
-        halted_ = true;
-        return false;
+    case 0xF6: { const auto address = fetch16(); regs_.b = bus_->read8(address); setNZ8(regs_.b); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
+    case 0xF7: { const auto address = fetch16(); bus_->write8(address, regs_.b); setNZ8(regs_.b); regs_.cc &= static_cast<std::uint8_t>(~Overflow); cycles_ += 5; return true; }
+    default: halted_ = true; return false;
     }
 }
 
