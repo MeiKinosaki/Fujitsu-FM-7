@@ -7,10 +7,11 @@
 
 namespace fm7 {
 
-// FM-7 address-map development scaffold. Region constants are informed by
-// the MAME FM-7 driver, but ROM banking and peripheral decoding remain TODOs.
-// Main CPU and subsystem CPU have separate address spaces with shared RAM.
-class FM7Machine {
+// FM-7 address-map development scaffold. Constants are based on the current
+// reference map, while ROM banking and peripheral decoding remain TODOs.
+// The class implements the main CPU's memory interface so CPU accesses can be
+// routed through the machine-level shared-RAM decoder.
+class FM7Machine final : public MemoryInterface {
 public:
     static constexpr std::uint16_t kMainRamStart = 0x0000;
     static constexpr std::uint16_t kMainRamEnd = 0x7FFF;
@@ -44,6 +45,14 @@ public:
     const MemoryBus& mainBus() const noexcept { return mainBus_; }
     MemoryBus& subBus() noexcept { return subBus_; }
     const MemoryBus& subBus() const noexcept { return subBus_; }
+
+    std::uint8_t read8(std::uint16_t address) const noexcept override {
+        return mainRead8(address);
+    }
+
+    void write8(std::uint16_t address, std::uint8_t value) noexcept override {
+        mainWrite8(address, value);
+    }
 
     std::uint8_t mainRead8(std::uint16_t address) const noexcept {
         if (address >= kSharedRamStart && address <= kSharedRamEnd) {
