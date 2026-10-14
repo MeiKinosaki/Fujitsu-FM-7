@@ -2,7 +2,7 @@
 
 Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 
-> **Status:** early emulator core. The host build and CTest suite must be checked against the latest GitHub Actions run. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
+> **Status:** early emulator core. Check the latest GitHub Actions run for validation of the current commit. This is not yet a complete FM-7 emulator and does not produce a working Xbox 360 `default.xex`.
 
 ## Current implementation
 
@@ -10,15 +10,15 @@ Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 - Initial Motorola 6809 instruction subset: immediate and extended loads/stores, basic arithmetic/logical operations, short and long branches, stack push/pull subset, `BSR`, `LBSR`, extended `JSR`, `RTS`, and basic cycle accounting.
 - `MemoryBus` abstraction with 64 KiB address space, 8-bit reads/writes, big-endian 16-bit helpers, and wraparound at `0xFFFF`.
 - CPU can use an injected shared `MemoryBus`; instruction fetch, stack access, and implemented extended load/store operations route through that bus.
-- Host smoke-test program and CPU tests now use the bus-backed CPU constructor.
-- Automated tests for CPU loads/stores, branches, subroutine call/return, and memory-bus byte/word operations.
+- Initial `FM7Machine` wrapper defines named development regions for RAM, video RAM, and I/O while sharing the flat bus.
+- Automated tests cover CPU operations, subroutine flow, bus byte/word access, and basic machine memory access.
 - Host executable named `fum7x360`.
 
-The bus remains a flat-memory foundation only. The FM-7 hardware map, second processor, shared-memory arbitration, interrupts, and memory-mapped devices are not implemented. Unsupported CPU opcodes stop execution, so the current subset cannot run FM-7 firmware or commercial software.
+**Hardware-accuracy note:** the named regions in `FM7Machine` are scaffolding, not a verified FM-7 hardware map. They currently use the same flat backing memory; device decoding, correct ROM/RAM banking, the second processor, shared-memory arbitration, interrupts, and memory-mapped devices remain unimplemented. Unsupported CPU opcodes stop execution, so the current subset cannot run FM-7 firmware or commercial software.
 
 ## Planned work
 
-1. Add a machine-level address map and device mapping to the bus.
+1. Verify and implement the real FM-7 memory map and device decoding from reliable technical references.
 2. Implement shared-memory coordination and the FM-7 processor arrangement.
 3. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupt handling.
 4. Implement video RAM/planes, palette and scanout.
