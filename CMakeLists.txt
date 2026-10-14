@@ -21,3 +21,7 @@ add_test(NAME fm7core_tests COMMAND fm7core_tests)
 add_executable(memory_bus_tests tests/memory_bus_tests.cpp)
 target_include_directories(memory_bus_tests PRIVATE src)
 add_test(NAME memory_bus_tests COMMAND memory_bus_tests)
+
+add_executable(fm7_machine_tests tests/fm7_machine_tests.cpp)
+target_include_directories(fm7_machine_tests PRIVATE src)
+add_test(NAME fm7_machine_tests COMMAND fm7_machine_tests)
