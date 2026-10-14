@@ -7,10 +7,6 @@
 
 namespace fm7 {
 
-// FM-7 address-map development scaffold. Constants are based on the current
-// reference map, while ROM banking and peripheral decoding remain TODOs.
-// The class implements the main CPU's memory interface so CPU accesses can be
-// routed through the machine-level shared-RAM decoder.
 class FM7Machine final : public MemoryInterface {
 public:
     static constexpr std::uint16_t kMainRamStart = 0x0000;
@@ -39,12 +35,30 @@ public:
     static constexpr std::uint16_t kSubRomStart = 0xD800;
     static constexpr std::uint16_t kSubRomEnd = 0xFFFF;
 
-    FM7Machine() = default;
+    class SubsystemMemoryView final : public MemoryInterface {
+    public:
+        explicit SubsystemMemoryView(FM7Machine& machine) noexcept : machine_(&machine) {}
+
+        std::uint8_t read8(std::uint16_t address) const noexcept override {
+            return machine_->subRead8(address);
+        }
+
+        void write8(std::uint16_t address, std::uint8_t value) noexcept override {
+            machine_->subWrite8(address, value);
+        }
+
+    private:
+        FM7Machine* machine_;
+    };
+
+    FM7Machine() : subMemory_(*this) {}
 
     MemoryBus& mainBus() noexcept { return mainBus_; }
     const MemoryBus& mainBus() const noexcept { return mainBus_; }
     MemoryBus& subBus() noexcept { return subBus_; }
     const MemoryBus& subBus() const noexcept { return subBus_; }
+    MemoryInterface& subMemory() noexcept { return subMemory_; }
+    const MemoryInterface& subMemory() const noexcept { return subMemory_; }
 
     std::uint8_t read8(std::uint16_t address) const noexcept override {
         return mainRead8(address);
@@ -94,6 +108,7 @@ private:
     MemoryBus mainBus_{};
     MemoryBus subBus_{};
     std::array<std::uint8_t, 0x80> sharedRam_{};
+    SubsystemMemoryView subMemory_;
 };
 
 } // namespace fm7
