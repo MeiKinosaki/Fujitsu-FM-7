@@ -2,7 +2,6 @@
 
 #include "memory_bus.h"
 
-#include <cstddef>
 #include <cstdint>
 
 namespace fm7 {
@@ -27,14 +26,14 @@ public:
     };
 
     M6809();
-    explicit M6809(MemoryBus& bus);
+    explicit M6809(MemoryInterface& memory);
     void reset(std::uint16_t startAddress = 0x0000);
     bool step();
 
     Registers& registers() noexcept { return regs_; }
     const Registers& registers() const noexcept { return regs_; }
-    MemoryBus& bus() noexcept { return *bus_; }
-    const MemoryBus& bus() const noexcept { return *bus_; }
+    MemoryInterface& memory() noexcept { return *memory_; }
+    const MemoryInterface& memory() const noexcept { return *memory_; }
     std::uint64_t cycles() const noexcept { return cycles_; }
     bool halted() const noexcept { return halted_; }
 
@@ -54,7 +53,7 @@ private:
     bool branchCondition(std::uint8_t opcode) const;
 
     MemoryBus ownedBus_{};
-    MemoryBus* bus_ = &ownedBus_;
+    MemoryInterface* memory_ = &ownedBus_;
     Registers regs_{};
     std::uint64_t cycles_ = 0;
     bool halted_ = false;
