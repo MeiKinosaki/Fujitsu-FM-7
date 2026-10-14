@@ -7,21 +7,22 @@ Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 ## Current implementation
 
 - Portable C++17 core built with CMake.
-- Initial Motorola 6809 instruction subset: immediate and extended loads/stores, basic arithmetic/logical operations, short and long branches, stack push/pull subset, `BSR`, `LBSR`, extended `JSR`, `RTS`, and basic cycle accounting.
-- `MemoryInterface` abstraction for CPU byte/word memory operations, with the flat `MemoryBus` implementing the interface.
-- `M6809` accepts any `MemoryInterface`, so instruction fetch, stack access and implemented data operations can be routed through machine-level decoders.
-- `FM7Machine` implements the main CPU memory interface; its `SubsystemMemoryView` maps the subsystem CPU through the subsystem address space.
+- Initial Motorola 6809 instruction subset and basic cycle accounting.
+- `MemoryInterface` abstraction for CPU byte/word memory operations, with a flat `MemoryBus` implementation.
+- `FM7Machine` main CPU memory interface and a `SubsystemMemoryView` for the subsystem address space.
 - Both CPU views map their shared-RAM windows to the same 128-byte backing array.
-- Automated integration tests execute 6809 instructions through the main and subsystem mapped interfaces and check cross-CPU shared-RAM visibility.
+- `FM7Scheduler` deterministic cooperative scheduler scaffold with independent cycle counters, configurable subsystem-to-main cycle ratio, and reset support.
+- `stepM6809` adapter allows scheduler callbacks to step an M6809 and report consumed cycles.
+- Automated tests cover CPU operations, machine memory views, shared-RAM visibility, and scheduler cycle budgets.
 - Host executable named `fum7x360`.
 
-**Hardware-accuracy note:** this remains a development scaffold. Region constants need validation against hardware documentation and the reference driver. ROM banking, peripheral decoding, video hardware, I/O devices, shared-memory arbitration/timing, and processor scheduling remain incomplete. Unsupported CPU opcodes stop execution, so this cannot yet run FM-7 firmware or commercial software.
+**Hardware-accuracy note:** this remains a development scaffold. The address map and CPU timing need validation against hardware documentation and a reference implementation. The scheduler's default ratio is only a placeholder, not a claim about FM-7 clock ratios. It does not yet provide cycle-exact bus arbitration, interrupt scheduling, or simultaneous CPU execution. ROM banking, peripheral decoding, video hardware, I/O devices and complete CPU instruction coverage are incomplete. This cannot yet run FM-7 firmware or commercial software.
 
 ## Planned work
 
-1. Verify and refine the memory map, then add ROM/RAM banking and peripheral decode.
-2. Add shared-memory access timing, interrupt lines and processor coordination/scheduling.
-3. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupts.
+1. Validate the memory map, then implement ROM/RAM banking and peripheral decode.
+2. Verify CPU clocks and add shared-memory arbitration, interrupts, and processor coordination.
+3. Expand and validate 6809 instruction coverage, flags and cycle timing.
 4. Implement video RAM/planes, palette and scanout.
 5. Add sound, keyboard/joystick, cassette and disk devices.
 6. Integrate the Xbox 360 frontend and select a compatible SDK/toolchain.
