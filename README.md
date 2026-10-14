@@ -9,24 +9,23 @@ Experimental Fujitsu FM-7 emulator project targeting Xbox 360.
 - Portable C++17 core built with CMake.
 - Initial Motorola 6809 instruction subset: immediate and extended loads/stores, basic arithmetic/logical operations, short and long branches, stack push/pull subset, `BSR`, `LBSR`, extended `JSR`, `RTS`, and basic cycle accounting.
 - `MemoryInterface` abstraction for CPU byte/word memory operations, with the flat `MemoryBus` implementing the interface.
-- `M6809` now accepts any `MemoryInterface`, so instruction fetch, stack access and implemented data operations can be routed through a machine-level decoder.
-- `FM7Machine` implements the main CPU memory interface and maps accesses to the main address space, including the shared-RAM window.
-- A CPU integration test runs code through `FM7Machine` and verifies that a write to main shared RAM is visible through the subsystem shared-RAM address.
-- Separate main and subsystem backing buses and an initial shared-RAM window.
+- `M6809` accepts any `MemoryInterface`, so instruction fetch, stack access and implemented data operations can be routed through machine-level decoders.
+- `FM7Machine` implements the main CPU memory interface; its `SubsystemMemoryView` maps the subsystem CPU through the subsystem address space.
+- Both CPU views map their shared-RAM windows to the same 128-byte backing array.
+- Automated integration tests execute 6809 instructions through the main and subsystem mapped interfaces and check cross-CPU shared-RAM visibility.
 - Host executable named `fum7x360`.
 
-**Hardware-accuracy note:** this remains a development scaffold. Region constants need validation against hardware documentation and the reference driver. ROM banking, peripheral decoding, video hardware, I/O devices, arbitration/timing, and subsystem CPU interface integration are incomplete. Unsupported CPU opcodes stop execution, so this cannot yet run FM-7 firmware or commercial software.
+**Hardware-accuracy note:** this remains a development scaffold. Region constants need validation against hardware documentation and the reference driver. ROM banking, peripheral decoding, video hardware, I/O devices, shared-memory arbitration/timing, and processor scheduling remain incomplete. Unsupported CPU opcodes stop execution, so this cannot yet run FM-7 firmware or commercial software.
 
 ## Planned work
 
-1. Add the subsystem CPU memory adapter and route it through the subsystem address decoder.
-2. Validate the map against reference implementations and documentation; implement ROM/RAM banking and peripheral decode.
-3. Add shared-memory access timing and processor coordination.
-4. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupt handling.
-5. Implement video RAM/planes, palette and scanout.
-6. Add sound, keyboard/joystick, cassette and disk devices.
-7. Integrate the Xbox 360 frontend and select a compatible SDK/toolchain.
-8. Build and test a genuine Xbox 360 `default.xex` on supported hardware or a suitable test environment.
+1. Verify and refine the memory map, then add ROM/RAM banking and peripheral decode.
+2. Add shared-memory access timing, interrupt lines and processor coordination/scheduling.
+3. Expand and validate 6809 instruction coverage, flags, cycle timing, and interrupts.
+4. Implement video RAM/planes, palette and scanout.
+5. Add sound, keyboard/joystick, cassette and disk devices.
+6. Integrate the Xbox 360 frontend and select a compatible SDK/toolchain.
+7. Build and test a genuine Xbox 360 `default.xex` on supported hardware or a suitable test environment.
 
 ## Host build
 
