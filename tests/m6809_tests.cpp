@@ -1,4 +1,5 @@
 #include "cpu/m6809.h"
+#include "fm7_machine.h"
 
 #include <cassert>
 #include <cstdint>
@@ -44,11 +45,11 @@ int main() {
         auto& mem = bus.rawMemory();
         mem[0x0300] = 0x8D; // BSR +3; return address = $0302
         mem[0x0301] = 0x03;
-        mem[0x0302] = 0xC6; // LDB #$66 after return
+        mem[0x0302] = 0xC6;
         mem[0x0303] = 0x66;
-        mem[0x0305] = 0x86; // subroutine: LDA #$5a
+        mem[0x0305] = 0x86;
         mem[0x0306] = 0x5A;
-        mem[0x0307] = 0x39; // RTS
+        mem[0x0307] = 0x39;
         cpu.reset(0x0300);
         cpu.registers().s = 0x4000;
 
@@ -68,12 +69,12 @@ int main() {
         fm7::MemoryBus bus;
         fm7::M6809 cpu(bus);
         auto& mem = bus.rawMemory();
-        mem[0x0400] = 0x17; // LBSR +3; return address = $0403
+        mem[0x0400] = 0x17;
         mem[0x0401] = 0x00;
         mem[0x0402] = 0x03;
-        mem[0x0403] = 0x12; // NOP after return
-        mem[0x0406] = 0x4F; // subroutine: CLRA
-        mem[0x0407] = 0x39; // RTS
+        mem[0x0403] = 0x12;
+        mem[0x0406] = 0x4F;
+        mem[0x0407] = 0x39;
         cpu.reset(0x0400);
         cpu.registers().s = 0x5000;
 
@@ -91,14 +92,14 @@ int main() {
         fm7::MemoryBus bus;
         fm7::M6809 cpu(bus);
         auto& mem = bus.rawMemory();
-        mem[0x0500] = 0xBD; // JSR $0510
+        mem[0x0500] = 0xBD;
         mem[0x0501] = 0x05;
         mem[0x0502] = 0x10;
-        mem[0x0503] = 0xC6; // LDB #$77 after return
+        mem[0x0503] = 0xC6;
         mem[0x0504] = 0x77;
-        mem[0x0510] = 0x86; // subroutine: LDA #$22
+        mem[0x0510] = 0x86;
         mem[0x0511] = 0x22;
-        mem[0x0512] = 0x39; // RTS
+        mem[0x0512] = 0x39;
         cpu.reset(0x0500);
         cpu.registers().s = 0x6000;
 
@@ -117,10 +118,30 @@ int main() {
     {
         fm7::MemoryBus bus;
         fm7::M6809 cpu(bus);
-        bus.write8(0, 0x00); // deliberately unsupported
+        bus.write8(0, 0x00);
         cpu.reset(0);
         assert(!cpu.step());
         assert(cpu.halted());
+    }
+
+    {
+        fm7::FM7Machine machine;
+        machine.resetMemory();
+        // LDA #$5A; STA $FC80 (main shared RAM); NOP
+        auto& program = machine.mainBus().rawMemory();
+        program[0x0100] = 0x86;
+        program[0x0101] = 0x5A;
+        program[0x0102] = 0xB7;
+        program[0x0103] = 0xFC;
+        program[0x0104] = 0x80;
+        program[0x0105] = 0x12;
+
+        fm7::M6809 cpu(machine);
+        cpu.reset(0x0100);
+        assert(cpu.step());
+        assert(cpu.step());
+        assert(machine.subRead8(fm7::FM7Machine::kSubSharedRamStart) == 0x5A);
+        assert(cpu.step());
     }
 
     return 0;
